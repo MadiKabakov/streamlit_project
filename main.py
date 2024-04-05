@@ -1,5 +1,6 @@
 import streamlit as st
 from PyPDF2 import PdfReader
+import json
 
 import google.generativeai as genai
 
@@ -16,11 +17,11 @@ genai.configure(api_key=API_KEY)
 
 model = genai.GenerativeModel('gemini-pro')
 
-prompt_template = f"""
+prompt_template = """
 Входные данные:
-- Должность (Position): "[Название должности]"
-- Описание должности (Position description): "[Текстовое описание должности, включающее в себя обязанности, требования к навыкам, опыту работы и образованию]"
-- Резюме кандидата (Applicant resume): "[Текст резюме кандидата, извлеченный из PDF или вставленный в текстовое поле]"
+- Должность (Position): %s
+- Описание должности (Position description): %s
+- Резюме кандидата (Applicant resume): %s
 
 Проанализируйте предоставленные данные и генерируйте выводы исключительно в формате JSON. Важно, чтобы ответ содержал только информацию, организованную в следующую структуру JSON, без каких-либо дополнительных объяснений или текста за пределами JSON-формата:
 
@@ -55,12 +56,19 @@ with st.sidebar:
 
 txt = st.text_area(label="Вставьте сюда текст резюме")
 
-st.write(f'You wrote {len(txt)} characters.')
+position = "analyst"
+description = "analyst jobs"
+
+
 
 analazy_button = st.button("Analyze", type="primary")
 
 if analazy_button and pdf_doc:
-    st.write(get_pdf_text(pdf_doc))
-    txt = "test"
+    response = model.generate_content(prompt_template % (position, description, get_pdf_text(pdf_doc)))
+    json_resp = json.loads(response.text)
+    st.write(json_resp['Applicant_name'])
+    st.write(json_resp['Short_Description'])
+    st.write(json_resp['Advice_from_AI'])
+    st.write(json_resp['Applicant_score'])
 else:
     st.write("Нет файла")
