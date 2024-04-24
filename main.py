@@ -4,6 +4,7 @@ import json
 
 import google.generativeai as genai
 
+
 def get_pdf_text(pdf):
     text = ""
     pdf_reader = PdfReader(pdf)
@@ -11,7 +12,8 @@ def get_pdf_text(pdf):
         text += page.extract_text()
     return text
 
-API_KEY = "AIzaSyDq4dLRG_V8ur6BGdRmFTb2KtNw_znbWp4"
+
+API_KEY = "MY_API_KEY"
 
 genai.configure(api_key=API_KEY)
 
@@ -43,32 +45,36 @@ st.set_page_config(
     )
 
 
-st.title('Main theme')
+st.title('AI CV analyzer')
 
-with st.sidebar:
-    pdf_doc = st.file_uploader(
-        label="Upload your PDF Files and Click on the Submit & Process Button", accept_multiple_files=False
-    )
-    if st.button("Submit & Process"):
-        with st.spinner("Processing..."):
-            raw_text = get_pdf_text(pdf_doc)
-            st.success("Done")
+# with st.sidebar:
+#     pdf_doc = st.file_uploader(
+#         label="Upload your PDF Files and Click on the Submit & Process Button", accept_multiple_files=False
+#     )
+#     if st.button("Submit & Process"):
+#         with st.spinner("Processing..."):
+#             raw_text = get_pdf_text(pdf_doc)
+#             st.success("Done")
 
-txt = st.text_area(label="Вставьте сюда текст резюме")
+txt = st.text_area(label="You can paste resume text here")
+pdf_doc = st.file_uploader(
+    label="or upload pdf here", accept_multiple_files=False
+)
 
 position = "analyst"
 description = "analyst jobs"
 
+analyze_button = st.button("Analyze", type="primary")
 
-
-analazy_button = st.button("Analyze", type="primary")
-
-if analazy_button and pdf_doc:
+if analyze_button and pdf_doc:
     response = model.generate_content(prompt_template % (position, description, get_pdf_text(pdf_doc)))
     json_resp = json.loads(response.text)
-    st.write(json_resp['Applicant_name'])
-    st.write(json_resp['Short_Description'])
-    st.write(json_resp['Advice_from_AI'])
-    st.write(json_resp['Applicant_score'])
+    st.write(f"Applicant name: {json_resp['Applicant_name']}")
+    st.write(f"Short description {json_resp['Short_Description']}")
+    st.write(f"Advice from AI: {json_resp['Advice_from_AI']}")
+    st.write(f"Applicant score: {json_resp['Applicant_score']} / 100")
+
+    st.write("Выходные данные: ")
+    st.write(json_resp)
 else:
     st.write("Нет файла")
